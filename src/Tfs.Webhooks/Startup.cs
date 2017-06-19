@@ -9,6 +9,7 @@ namespace Tfs.WebHooks
     using Owin;
     using Serilog;
     using Services;
+    using System;
     using System.Configuration;
     using System.Web.Http;
     using System.Web.Http.ExceptionHandling;
@@ -36,9 +37,19 @@ namespace Tfs.WebHooks
             var environment = ConfigurationManager.AppSettings["Environment"];
             var outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{RequestId}] [{Level:u3}] {Message}{NewLine}{Exception}";
             var filePath = ConfigurationManager.AppSettings["LogFilePath"];
+
+            var flushToDiskIntervalInSeconds = 10;
+            if (int.TryParse(ConfigurationManager.AppSettings["LogFileFlushToDiskIntervalInSeconds"], out int configuredFlushToDiskIntervalInSeconds))
+            {
+                flushToDiskIntervalInSeconds = configuredFlushToDiskIntervalInSeconds;
+            }
+
             var loggerConfiguration = new LoggerConfiguration()
                 .Enrich.FromLogContext()
-                .WriteTo.File(filePath, outputTemplate: outputTemplate);
+                .WriteTo.File(
+                    filePath,
+                    outputTemplate: outputTemplate,
+                    flushToDiskInterval: TimeSpan.FromSeconds(flushToDiskIntervalInSeconds));
 
             Log.Logger = loggerConfiguration.CreateLogger();
         }
