@@ -6,6 +6,7 @@ namespace Tfs.WebHooks
     using Handlers;
     using MessageHandlers;
     using Microsoft.AspNet.WebHooks;
+    using Microsoft.Owin.BuilderProperties;
     using Owin;
     using Serilog;
     using Services;
@@ -30,6 +31,13 @@ namespace Tfs.WebHooks
             configuration.InitializeReceiveVstsWebHooks();
 
             app.UseWebApi(configuration);
+
+            new AppProperties(app.Properties)
+                .OnAppDisposing
+                .Register(() =>
+                {
+                    Log.CloseAndFlush();
+                });
         }
 
         private static void ConfigureSerilog()
